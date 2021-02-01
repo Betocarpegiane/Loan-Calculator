@@ -1,0 +1,228 @@
+import math
+import sys
+import argparse
+
+args = sys.argv
+
+
+class LoanCalculator:
+
+    def menu(self):
+        print('What do you want to calculate?')
+        print('type "n" for number of monthly payments,')
+        print('type "a" for annuity monthly payment amount,')
+        print('type "p" for loan principal:')
+
+        x = input()
+
+        if x == "n":
+            self.number_of_montly_payments()
+
+        elif x == "a":
+            self.annuity_monthly_payment_amount()
+
+        elif x == "p":
+            self.loan_principal()
+
+    def number_of_montly_payments(self):
+        print("Enter the loan principal:")
+        loan_principal = int(input())
+        print("Enter the monthly payment:")
+        monthly_payment = int(input())
+        print("Enter the loan interest:")
+        loan_interest = float(input())
+
+        i = (loan_interest / 100) / 12
+        A = monthly_payment / (monthly_payment - i * loan_principal)
+        n = math.ceil(math.log(A, 1 + i))
+
+        """finding in years and months"""
+
+        months_convert = n / 12
+        ya = int(months_convert // 1)
+        m = int(((months_convert % 1) * 12))
+
+        if ya > 1 and m > 1:
+            print("It will take {} years and {} months to repay this loan!".format(ya, m))
+        elif ya > 1 and m == 0:
+            print("It will take {} years to repay this loan!".format(ya))
+        elif ya == 1 and m == 0:
+            print("It will take {} year to repay this loan!".format(ya))
+
+        elif ya == 0 and m == 1:
+            print("It will take {} month to repay the loan".format(m))
+        else:
+            print("It will take {} months to repay the loan".format(m))
+
+    def annuity_monthly_payment_amount(self):
+        print("Enter the loan principal:")
+        loan_principal = int(input())
+
+        print("Enter the number of periods:")
+        n = int(input())
+
+        print("Enter the loan interest:")
+        loan_interest = float(input())
+
+        i = (loan_interest / 100) / 12
+
+        B = (i * (1 + i) ** n)
+        C = ((1 + i) ** n) - 1
+
+        A = math.ceil(loan_principal * ((B) / (C)))
+
+        print("Your monthly payment = {}!".format(A))
+
+    def loan_principal(self):
+        print("Enter the annuity payment:")
+        A = float(input())
+        print("Enter the number of periods:")
+        n = int(input())
+        print("Enter the loan interest:")
+        loan_interest = float(input())
+
+        i = (loan_interest / 100) / 12
+        B = (i * (1 + i) ** n)
+        C = ((1 + i) ** n) - 1
+
+        loan_principal = A / ((B) / (C))
+
+        print("Your loan principal = {}!".format(loan_principal))
+
+    def main(self):
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--type", type=str)
+        parser.add_argument("--principal", type=int)
+        parser.add_argument("--periods", type=int)
+        parser.add_argument("--interest", type=float)
+        parser.add_argument("--payment", type=int)
+
+        args = parser.parse_args()
+
+        variables = {'type': args.type,
+                     'principal': args.principal,
+                     'periods': args.periods,
+                     'interest': args.interest,
+                     'payment': args.payment
+                     }
+
+        var_count = 0
+        for var in variables.values():
+            if var is not None:
+                var_count += 1
+        if var_count < 4:
+            print("Incorrect parameters.")
+            return
+
+        if variables['type'] == 'diff' and variables['payment'] is not None:
+            print("Incorrect parameters.")
+            return
+
+        if variables['principal'] is not None:
+            if variables['principal'] < 0:
+                print("Incorrect parameters.")
+                return
+
+        if variables['periods'] is not None:
+            if variables['periods'] < 0:
+                print("Incorrect parameters.")
+                return
+
+        if variables['interest'] is not None:
+            if variables['interest'] < 0:
+                print("Incorrect parameters.")
+                return
+
+        if variables['payment'] is not None:
+            if variables['payment'] < 0:
+                print("Incorrect parameters.")
+                return
+
+        if variables['type'] == 'diff':
+            self.diff(variables)
+
+        elif variables['type'] == 'annuity':
+            self.annuity(variables)
+
+        else:
+            print("Incorrect parameters.")
+
+    def diff(self, vars):
+        loan_principal = vars['principal']
+        loan_interest = vars['interest']
+        n = vars['periods']
+
+        i = (loan_interest / 100) / 12
+
+        lst_payments = []
+
+        for m in range(1, n + 1):
+            Dm = math.ceil((loan_principal / n) + i * (loan_principal - (loan_principal * ((m - 1) / n))))
+            lst_payments.append(Dm)
+        overpayment = (sum(lst_payments)) - loan_principal
+
+        for i, m in enumerate(lst_payments, 1):
+            print("Month {}: payment is {}".format(i, m))
+            print()
+        print("Overpayment = {}".format(overpayment))
+
+    def annuity(self, vars):
+        loan_principal = vars['principal']
+        loan_interest = vars['interest']
+        n = vars['periods']
+        A = vars['payment']
+
+        if A is None:
+            i = (loan_interest / 100) / 12
+            B = (i * (1 + i) ** n)
+            C = ((1 + i) ** n) - 1
+            A = math.ceil(loan_principal * (B / C))
+            overpayment = (A * n) - loan_principal
+
+            print("Your annuity payment = {}!".format(A))
+            print("Overpayment = {}".format(overpayment))
+
+        if loan_principal is None:
+            i = (loan_interest / 100) / 12
+            B = (i * (1 + i) ** n)
+            C = (((1 + i) ** n) - 1)
+
+            loan_principal = math.floor((A / (B / C)))
+            overpayment = (A * n) - loan_principal
+
+            print("Your loan principal = {}!".format(loan_principal))
+            print("Overpayment = {}".format(overpayment))
+
+        if n is None:
+
+            i = (loan_interest / 100) / 12
+            x = A / (A - i * loan_principal)
+            n = math.ceil(math.log(x, 1 + i))
+
+            """finding in years and months"""
+
+            monthsConvert = n / 12
+            ya = int(monthsConvert // 1)
+            m = round(((monthsConvert % 1) * 12))
+
+            overpayment = (A * n) - loan_principal
+            print(overpayment)
+
+            if ya > 1 and m > 1:
+                print("It will take {} years and {} months to repay this loan!".format(ya, m))
+            elif ya > 1 and m == 0:
+                print("It will take {} years to repay this loan!".format(ya))
+            elif ya == 1 and m == 0:
+                print("It will take {} year to repay this loan!".format(ya))
+
+            elif ya == 0 and m == 1:
+                print("It will take {} month to repay the loan".format(m))
+            else:
+                print("It will take {} months to repay the loan".format(m))
+
+            print("Overpayment = {}".format(overpayment))
+
+
+lc = LoanCalculator()
+lc.main()
